@@ -31,12 +31,6 @@ namespace RZ.Linq.RelationalDatabase.Tests
             ElementType = typeof(T);
             provider = new TestQueryProvider(this);
             Expression = expression ?? Expression.Constant(this);
-
-            output.WriteLine("Create LINQ for type {0} with expression {1}", ElementType.Name, Expression);
-            ElementType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                       .Select(p => p.Name)
-                       .Concat(ElementType.GetFields(BindingFlags.Public | BindingFlags.Instance).Select(f => f.Name))
-                       .Iter(name => output.WriteLine("\t{0}", name));
         }
 
         public IOrderedQueryable<TEntity> Apply<TEntity>(MethodCallExpression expression) {

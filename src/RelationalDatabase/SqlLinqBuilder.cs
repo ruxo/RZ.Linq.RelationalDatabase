@@ -55,15 +55,17 @@ namespace RZ.Linq.RelationalDatabase
             var (sourceAlias, sourceKey) = ExtractJoinKey((UnaryExpression) expression.Arguments[2]);
             var (targetAlias, targetKey) = ExtractJoinKey((UnaryExpression) expression.Arguments[3]);
             var joiningTable = TableCache.GetTable(((ConstantExpression) expression.Arguments[1]).Value.GetType().GetGenericArguments()[0]);
+            var newTarget = TableAlias.New(targetAlias, joiningTable);
 
             JoinedTable singleToJoined(TableAlias single) {
                 var newSource = single.With(Alias: sourceAlias);
-                var newTarget = TableAlias.New(targetAlias, joiningTable);
                 return JoinedTable.New(Seq(new[] {newSource, newTarget}), Seq(new[] {JoinCondition.New(newSource, newTarget, sourceKey.Name, targetKey.Name)}));
             }
             var newSpace = TableSpace switch
             {
                 SingleTable t => singleToJoined(t.Single),
+                JoinedTable t => JoinedTable.New(Seq(t.Tables.Append(newTarget)),
+                                                 Seq(t.Joining.Append(JoinCondition.New(GetTable(sourceKey.DeclaringType), newTarget, sourceKey.Name, targetKey.Name)))),
                 _ => throw new NotSupportedException()
             };
             var select = (UnaryExpression) expression.Arguments[4];
@@ -102,18 +104,24 @@ namespace RZ.Linq.RelationalDatabase
                 _ => throw new InvalidOperationException($"Type {tableType.Name} is not in query context!")
             };
 
-        ImmutableList<string> GetSelect(ParameterExpression expr) {
-            var tableAlias = GetTable(expr.Type);
-            return tableAlias.Table.Columns.Select(c => tableAlias.FieldName(c.Name)).ToImmutableList();
-        }
-
+        ImmutableList<string> GetSelect(ParameterExpression expr) => ListFields(GetTable(expr.Type));
         ImmutableList<string> GetSelect(MemberExpression expr) => ImmutableList.Create(GetColumnName(expr.Member));
-        ImmutableList<string> GetSelect(NewExpression expr) => expr.Arguments.Cast<MemberExpression>().Select(m => GetColumnName(m.Member)).ToImmutableList();
+
+        ImmutableList<string> GetSelect(NewExpression expr) =>
+            expr.Arguments.SelectMany(arg => arg switch
+                {
+                    MemberExpression m => ImmutableList.Create(GetColumnName(m.Member)),
+                    ParameterExpression p => GetSelect(p),
+                    _ => throw new NotSupportedException($"Expression type {arg.GetType()} is not supported.")
+                })
+                .ToImmutableList();
 
         string GetColumnName(MemberInfo memberInfo) {
             var tableAlias = GetTable(memberInfo.DeclaringType);
             return tableAlias.FieldName(tableAlias.Table.Columns.Single(c => c.ColumnName == memberInfo.Name).Name);
         }
+
+        static ImmutableList<string> ListFields(TableAlias tableAlias) => tableAlias.Table.Columns.Select(c => tableAlias.FieldName(c.Name)).ToImmutableList();
 
         #endregion
     }

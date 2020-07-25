@@ -85,7 +85,7 @@ namespace RZ.Linq.RelationalDatabase.Tests
                                          select new { i.Name, d.ProductId };
             result.GetQueryString()
                   .Should()
-                  .Be("SELECT i.Id,i.Name,i.IsActive,i.Created FROM PersonPoco i INNER JOIN Order o ON i.Id=o.OwnerId");
+                  .Be("SELECT i.Name,d.ProductId FROM PersonPoco i INNER JOIN Order o ON i.Id=o.OwnerId INNER JOIN order_detail d ON o.OrderId=d.OrderId");
         }
 
         [Fact]
