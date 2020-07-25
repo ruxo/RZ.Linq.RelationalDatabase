@@ -21,8 +21,11 @@ namespace RZ.Linq.RelationalDatabase
     [Record]
     public partial class TableColumnInfo
     {
-        public readonly string Name;
+        public readonly string ColumnName;
+        public readonly Option<string> RealName;
         public readonly Type DataType;
+
+        public string Name => RealName.IfNone(ColumnName);
     }
 
     public static class TableCache
@@ -43,6 +46,6 @@ namespace RZ.Linq.RelationalDatabase
         static IEnumerable<TableColumnInfo> GetColumnsFrom(Func<BindingFlags, IEnumerable<MemberInfo>> getter) =>
             from i in getter(BindingFlags.Public | BindingFlags.Instance)
             let column = Optional(i.GetCustomAttribute<ColumnAttribute>()).Map(c => c.Name)
-            select TableColumnInfo.New(column.IfNone(i.Name), i.DeclaringType);
+            select TableColumnInfo.New(column.IfNone(i.Name), RealName: None, i.DeclaringType);
     }
 }

@@ -50,9 +50,12 @@ namespace RZ.Linq.RelationalDatabase
 
         public SqlLinqBuilder Select(UnaryExpression expression) {
             var lambda = (LambdaExpression) expression.Operand;
-            var target = (ParameterExpression) lambda.Body;
-            var table = GetTable(target.Type);
-            return With(SelectedFields: table.Table.Columns.Select(c => c.Name).ToImmutableList());
+            return With(SelectedFields: lambda.Body switch
+            {
+                ParameterExpression p => GetSelect(p),
+                MemberExpression m => GetSelect(m),
+                _ => throw new NotSupportedException($"Not support {lambda.Body.GetType()}")
+            });
         }
 
         TableAlias GetTable(Type tableType) =>
@@ -64,5 +67,10 @@ namespace RZ.Linq.RelationalDatabase
                 JoinedTable t => t.Tables.Single(tab => tab.Table.RepresentationType == tableType),
                 _ => throw new InvalidOperationException($"Type {tableType.Name} is not in query context!")
             };
+
+        ImmutableList<string> GetSelect(ParameterExpression expr) => GetTable(expr.Type).Table.Columns.Select(c => c.Name).ToImmutableList();
+
+        ImmutableList<string> GetSelect(MemberExpression expr) =>
+            ImmutableList.Create(GetTable(expr.Member.DeclaringType).Table.Columns.Single(c => c.Name == expr.Member.Name).Name);
     }
 }

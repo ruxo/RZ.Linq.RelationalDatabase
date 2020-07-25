@@ -27,6 +27,13 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         [Fact]
+        public void QuerySingleColumn() {
+            var linq = new TestLinq<PersonPoco>(output);
+            var result = (TestLinq<string>) from i in linq select i.Name;
+            result.GetQueryString().Should().Be("SELECT Name FROM PersonPoco");
+        }
+
+        [Fact]
         public void QueryModel() {
             var linq = new TestLinq<PersonPoco>(output);
             var order = new TestLinq<Order>(output);
