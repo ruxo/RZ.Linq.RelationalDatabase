@@ -49,6 +49,13 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         [Fact]
+        public void QueryAllWithCustomTableName() {
+            var linq = new TestLinq<OrderLineItem>(output);
+            var result = (TestLinq<OrderLineItem>) from i in linq select i;
+            result.GetQueryString().Should().Be("SELECT Id,ProductId,Quantity,Unit FROM order_detail");
+        }
+
+        [Fact]
         public void QueryModel() {
             var linq = new TestLinq<PersonPoco>(output);
             var order = new TestLinq<Order>(output);
