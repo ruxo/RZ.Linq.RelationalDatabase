@@ -1,10 +1,8 @@
-using System;
 using System.Linq;
 using FluentAssertions;
 using RZ.Linq.RelationalDatabase.Tests.Models;
 using Xunit;
 using Xunit.Abstractions;
-using static LanguageExt.Prelude;
 
 namespace RZ.Linq.RelationalDatabase.Tests
 {
@@ -16,10 +14,16 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         [Fact]
+        public void QueryAllWithObject() {
+            var linq = new TestLinq<PersonPoco>(output);
+            linq.GetQueryString().Should().Be("SELECT * FROM PersonPoco");
+        }
+
+        [Fact]
         public void QueryAll() {
             var linq = new TestLinq<PersonPoco>(output);
             var result = (TestLinq<PersonPoco>) from i in linq select i;
-            result.GetQueryString().Should().Be("SELECT * FROM PersonPoco");
+            result.GetQueryString().Should().Be("SELECT Id,Name,IsActive,Created FROM PersonPoco");
         }
 
         [Fact]

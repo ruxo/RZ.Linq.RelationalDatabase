@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Immutable;
+using System.Linq;
+using System.Linq.Expressions;
 using LanguageExt;
 using static LanguageExt.Prelude;
 
@@ -45,5 +47,22 @@ namespace RZ.Linq.RelationalDatabase
 
         public static SqlLinqBuilder Create(Type mainTable) =>
             New(SingleTable.New(TableAlias.New(None, TableCache.GetTable(mainTable))), None, ImmutableList<string>.Empty, None, None, false);
+
+        public SqlLinqBuilder Select(UnaryExpression expression) {
+            var lambda = (LambdaExpression) expression.Operand;
+            var target = (ParameterExpression) lambda.Body;
+            var table = GetTable(target.Type);
+            return With(SelectedFields: table.Table.Columns.Select(c => c.Name).ToImmutableList());
+        }
+
+        TableAlias GetTable(Type tableType) =>
+            TableSpace switch
+            {
+                SingleTable t => t.Single.Table.RepresentationType == tableType
+                                     ? t.Single
+                                     : throw new InvalidOperationException($"Type {tableType.Name} is not in query context!"),
+                JoinedTable t => t.Tables.Single(tab => tab.Table.RepresentationType == tableType),
+                _ => throw new InvalidOperationException($"Type {tableType.Name} is not in query context!")
+            };
     }
 }

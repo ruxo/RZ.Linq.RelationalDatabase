@@ -19,14 +19,16 @@ namespace RZ.Linq.RelationalDatabase.Tests
         readonly TestQueryProvider provider;
         readonly SqlLinqBuilder builder;
 
-        public TestLinq(ITestOutputHelper output, Expression? expression = null) {
-            this.output = output;
-            ElementType = typeof(T);
-            builder = SqlLinqBuilder.Create(typeof(T));
-            provider = new TestQueryProvider(this);
-            Expression = Expression.Constant(this);
+        public TestLinq(ITestOutputHelper output) : this(output, SqlLinqBuilder.Create(typeof(T))) { }
 
-            output.WriteLine("Create LINQ for type {0} with expression {1}", ElementType.Name, expression);
+        TestLinq(ITestOutputHelper output, SqlLinqBuilder builder, Expression? expression = null) {
+            this.output = output;
+            this.builder = builder;
+            ElementType = typeof(T);
+            provider = new TestQueryProvider(this);
+            Expression = expression ?? Expression.Constant(this);
+
+            output.WriteLine("Create LINQ for type {0} with expression {1}", ElementType.Name, Expression);
             ElementType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                        .Select(p => p.Name)
                        .Concat(ElementType.GetFields(BindingFlags.Public | BindingFlags.Instance).Select(f => f.Name))
@@ -34,11 +36,12 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         public IOrderedQueryable<TEntity> Apply<TEntity>(MethodCallExpression expression) {
-            switch (expression.Method.Name) {
-                case "Select":
-                    break;
-            }
-            return new TestLinq<TEntity>(output, expression);
+            var newBuilder = expression.Method.Name switch
+            {
+                "Select" => builder.Select((UnaryExpression) expression.Arguments[1]),
+                _ => builder
+            };
+            return new TestLinq<TEntity>(output, newBuilder, expression);
         }
 
         public string GetQueryString() => new SqlLiteDialect().Build(builder);
