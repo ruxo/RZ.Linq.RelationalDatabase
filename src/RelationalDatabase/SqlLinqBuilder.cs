@@ -2,6 +2,7 @@ using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using LanguageExt;
 using static LanguageExt.Prelude;
 
@@ -54,6 +55,7 @@ namespace RZ.Linq.RelationalDatabase
             {
                 ParameterExpression p => GetSelect(p),
                 MemberExpression m => GetSelect(m),
+                NewExpression n => GetSelect(n),
                 _ => throw new NotSupportedException($"Not support {lambda.Body.GetType()}")
             });
         }
@@ -69,8 +71,9 @@ namespace RZ.Linq.RelationalDatabase
             };
 
         ImmutableList<string> GetSelect(ParameterExpression expr) => GetTable(expr.Type).Table.Columns.Select(c => c.Name).ToImmutableList();
+        ImmutableList<string> GetSelect(MemberExpression expr) => ImmutableList.Create(GetColumnName(expr.Member));
+        ImmutableList<string> GetSelect(NewExpression expr) => expr.Arguments.Cast<MemberExpression>().Select(m => GetColumnName(m.Member)).ToImmutableList();
 
-        ImmutableList<string> GetSelect(MemberExpression expr) =>
-            ImmutableList.Create(GetTable(expr.Member.DeclaringType).Table.Columns.Single(c => c.ColumnName == expr.Member.Name).Name);
+        string GetColumnName(MemberInfo memberInfo) => GetTable(memberInfo.DeclaringType).Table.Columns.Single(c => c.ColumnName == memberInfo.Name).Name;
     }
 }

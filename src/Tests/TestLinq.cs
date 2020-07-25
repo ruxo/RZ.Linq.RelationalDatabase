@@ -9,11 +9,15 @@ using Xunit.Abstractions;
 
 namespace RZ.Linq.RelationalDatabase.Tests
 {
+    public interface ISqlGenerator
+    {
+        string GetQueryString();
+    }
     public interface IQueryableEngine
     {
         IOrderedQueryable<TEntity> Apply<TEntity>(MethodCallExpression expression);
     }
-    public sealed class TestLinq<T> : IOrderedQueryable<T>, IQueryableEngine
+    public sealed class TestLinq<T> : IOrderedQueryable<T>, IQueryableEngine, ISqlGenerator
     {
         readonly ITestOutputHelper output;
         readonly TestQueryProvider provider;

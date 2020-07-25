@@ -56,6 +56,13 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         [Fact]
+        public void QueryAllWithMultipleColumns() {
+            var linq = new TestLinq<Product>(output);
+            var result = (ISqlGenerator) from i in linq select new {i.Name, i.Created};
+            result.GetQueryString().Should().Be("SELECT Name,created_at FROM Product");
+        }
+
+        [Fact]
         public void QueryModel() {
             var linq = new TestLinq<PersonPoco>(output);
             var order = new TestLinq<Order>(output);
