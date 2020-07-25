@@ -19,6 +19,7 @@ namespace RZ.Linq.RelationalDatabase.Tests.Models
     public partial class OrderLineItem
     {
         public readonly int Id;
+        public readonly string OrderId;
         public readonly string ProductId;
         public readonly decimal Quantity;
         public readonly string Unit;

@@ -42,8 +42,9 @@ namespace RZ.Linq.RelationalDatabase.Tests
         public IOrderedQueryable<TEntity> Apply<TEntity>(MethodCallExpression expression) {
             var newBuilder = expression.Method.Name switch
             {
+                "Join" => builder.BuildJoin(expression),
                 "Select" => builder.Select((UnaryExpression) expression.Arguments[1]),
-                _ => builder
+                _ => throw new NotSupportedException($"Not support {expression.Method.Name}")
             };
             return new TestLinq<TEntity>(output, newBuilder, expression);
         }

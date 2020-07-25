@@ -52,7 +52,7 @@ namespace RZ.Linq.RelationalDatabase.Tests
         public void QueryAllWithCustomTableName() {
             var linq = new TestLinq<OrderLineItem>(output);
             var result = (TestLinq<OrderLineItem>) from i in linq select i;
-            result.GetQueryString().Should().Be("SELECT Id,ProductId,Quantity,Unit FROM order_detail");
+            result.GetQueryString().Should().Be("SELECT Id,OrderId,ProductId,Quantity,Unit FROM order_detail");
         }
 
         [Fact]
@@ -63,13 +63,41 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         [Fact]
-        public void QueryModel() {
+        public void QueryJoinAndSelectSingleTable() {
             var linq = new TestLinq<PersonPoco>(output);
             var order = new TestLinq<Order>(output);
-            var _ = (from i in linq
-                          join o in order on i.Id equals o.OwnerId
-                          where i.IsActive
-                          select new { i.Id, i.Name }).ToArray();
+            var result = (ISqlGenerator) from i in linq
+                                         join o in order on i.Id equals o.OwnerId
+                                         select i;
+            result.GetQueryString()
+                  .Should()
+                  .Be("SELECT i.Id,i.Name,i.IsActive,i.Created FROM PersonPoco i INNER JOIN Order o ON i.Id=o.OwnerId");
+        }
+
+        [Fact]
+        public void QueryTwoJoinAndSelectSingleTable() {
+            var linq = new TestLinq<PersonPoco>(output);
+            var order = new TestLinq<Order>(output);
+            var lineItem = new TestLinq<OrderLineItem>(output);
+            var result = (ISqlGenerator) from i in linq
+                                         join o in order on i.Id equals o.OwnerId
+                                         join d in lineItem on o.OrderId equals d.OrderId
+                                         select new { i.Name, d.ProductId };
+            result.GetQueryString()
+                  .Should()
+                  .Be("SELECT i.Id,i.Name,i.IsActive,i.Created FROM PersonPoco i INNER JOIN Order o ON i.Id=o.OwnerId");
+        }
+
+        [Fact]
+        public void QueryJoinAndSelectMultipleColumns() {
+            var linq = new TestLinq<PersonPoco>(output);
+            var order = new TestLinq<Order>(output);
+            var result = (ISqlGenerator) from i in linq
+                                         join o in order on i.Id equals o.OwnerId
+                                         select new {i.Id, i.Name, o.OrderId, o.PaidAmount, o.TargetDate };
+            result.GetQueryString()
+                  .Should()
+                  .Be("SELECT i.Id,i.Name,o.OrderId,o.PaidAmount,o.TargetDate FROM PersonPoco i INNER JOIN Order o ON i.Id=o.OwnerId");
         }
     }
 }

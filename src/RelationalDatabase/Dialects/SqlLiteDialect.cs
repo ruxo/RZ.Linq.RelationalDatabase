@@ -14,8 +14,19 @@ namespace RZ.Linq.RelationalDatabase.Dialects
             sb.Append(" FROM ");
             switch (builder.TableSpace) {
                 case SingleTable tab:
-                    sb.Append(tab.Single.Name);
-                    tab.Single.Alias.IfSome(alias => sb.Append($" {alias}"));
+                    AppendTable(sb, tab.Single);
+                    break;
+                case JoinedTable joined:
+                    var firstTable = joined.Tables.First();
+                    AppendTable(sb, firstTable);
+                    joined.Joining.Iter(j => {
+                        sb.Append(" INNER JOIN ");
+                        AppendTable(sb, j.Target);
+                        sb.Append(" ON ");
+                        sb.Append(j.Source.FieldName(j.SourceIdField));
+                        sb.Append('=');
+                        sb.Append(j.Target.FieldName(j.TargetIdField));
+                    });
                     break;
                 default:
                     throw new InvalidOperationException();
@@ -23,6 +34,11 @@ namespace RZ.Linq.RelationalDatabase.Dialects
 
             builder.WhereCondition.IfSome(s => sb.Append($" WHERE {s}"));
             return sb.ToString();
+        }
+
+        static void AppendTable(StringBuilder sb, TableAlias tab) {
+            sb.Append(tab.TableName);
+            tab.Alias.IfSome(alias => sb.Append($" {alias}"));
         }
     }
 }
