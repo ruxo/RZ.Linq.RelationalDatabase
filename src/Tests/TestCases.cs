@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using FluentAssertions;
 using RZ.Linq.RelationalDatabase.Tests.Models;
@@ -31,6 +32,20 @@ namespace RZ.Linq.RelationalDatabase.Tests
             var linq = new TestLinq<PersonPoco>(output);
             var result = (TestLinq<string>) from i in linq select i.Name;
             result.GetQueryString().Should().Be("SELECT Name FROM PersonPoco");
+        }
+
+        [Fact]
+        public void QueryAllWithCustomName() {
+            var linq = new TestLinq<Product>(output);
+            var result = (TestLinq<Product>) from i in linq select i;
+            result.GetQueryString().Should().Be("SELECT Id,Name,created_at FROM Product");
+        }
+
+        [Fact]
+        public void QuerySingleColumnWithCustomName() {
+            var linq = new TestLinq<Product>(output);
+            var result = (TestLinq<DateTime>) from i in linq select i.Created;
+            result.GetQueryString().Should().Be("SELECT created_at FROM Product");
         }
 
         [Fact]

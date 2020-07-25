@@ -71,6 +71,6 @@ namespace RZ.Linq.RelationalDatabase
         ImmutableList<string> GetSelect(ParameterExpression expr) => GetTable(expr.Type).Table.Columns.Select(c => c.Name).ToImmutableList();
 
         ImmutableList<string> GetSelect(MemberExpression expr) =>
-            ImmutableList.Create(GetTable(expr.Member.DeclaringType).Table.Columns.Single(c => c.Name == expr.Member.Name).Name);
+            ImmutableList.Create(GetTable(expr.Member.DeclaringType).Table.Columns.Single(c => c.ColumnName == expr.Member.Name).Name);
     }
 }

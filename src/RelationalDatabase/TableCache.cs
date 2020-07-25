@@ -46,6 +46,6 @@ namespace RZ.Linq.RelationalDatabase
         static IEnumerable<TableColumnInfo> GetColumnsFrom(Func<BindingFlags, IEnumerable<MemberInfo>> getter) =>
             from i in getter(BindingFlags.Public | BindingFlags.Instance)
             let column = Optional(i.GetCustomAttribute<ColumnAttribute>()).Map(c => c.Name)
-            select TableColumnInfo.New(column.IfNone(i.Name), RealName: None, i.DeclaringType);
+            select TableColumnInfo.New(i.Name, RealName: column.IfNone(i.Name), i.DeclaringType);
     }
 }
