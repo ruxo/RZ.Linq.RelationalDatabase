@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>8</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>RZ.Linq.RelationalDatabase</AssemblyName>
+    <RootNamespace>RZ.Linq.RelationalDatabase</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CodeGeneration.Roslyn.BuildTime" Version="0.6.1" PrivateAssets="all" />
+    <PackageReference Include="LanguageExt.CodeGen" Version="3.4.15" PrivateAssets="all" />
+    <DotNetCliToolReference Include="dotnet-codegen" Version="0.6.1" />
+    <PackageReference Include="LanguageExt.Core" Version="3.4.15" />
+    <PackageReference Include="RZ.Foundation" Version="3.0.2" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="4.7.0" />
+  </ItemGroup>
+
+</Project>
