@@ -2,13 +2,12 @@ using System;
 using System.Collections.Immutable;
 using System.Globalization;
 using RZ.Foundation.Extensions;
-using static LanguageExt.Prelude;
 
 namespace RZ.Linq.RelationalDatabase.Dialects
 {
     public abstract class SqlDialect
     {
-        public abstract string Build(SqlLinqBuilder builder);
+        public abstract string BuildSelectStatement(SqlLinqBuilder builder);
 
         public virtual string GetLiteral(object? value) =>
             LiteralMaker.Get(value?.GetType() ?? typeof(SqlDialect))

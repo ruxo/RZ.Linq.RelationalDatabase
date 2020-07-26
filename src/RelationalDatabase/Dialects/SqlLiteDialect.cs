@@ -7,7 +7,7 @@ namespace RZ.Linq.RelationalDatabase.Dialects
 {
     public sealed class SqlLiteDialect : SqlDialect
     {
-        public override string Build(SqlLinqBuilder builder) {
+        public override string BuildSelectStatement(SqlLinqBuilder builder) {
             var selectedFiels = (builder.SelectedFields.Any()? builder.SelectedFields : builder.GetAllFields()).Join(',');
             var sb = new StringBuilder();
             sb.Append("SELECT ");
