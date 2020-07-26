@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using RZ.Linq.RelationalDatabase.Dialects;
 using Xunit.Abstractions;
 
@@ -20,13 +19,15 @@ namespace RZ.Linq.RelationalDatabase.Tests
     public sealed class TestLinq<T> : IOrderedQueryable<T>, IQueryableEngine, ISqlGenerator
     {
         readonly ITestOutputHelper output;
+        readonly SqlDialect dialect;
         readonly TestQueryProvider provider;
         readonly SqlLinqBuilder builder;
 
-        public TestLinq(ITestOutputHelper output) : this(output, SqlLinqBuilder.Create(typeof(T))) { }
+        public TestLinq(ITestOutputHelper output, SqlDialect dialect) : this(output, dialect, SqlLinqBuilder.Create(typeof(T))) { }
 
-        TestLinq(ITestOutputHelper output, SqlLinqBuilder builder, Expression? expression = null) {
+        TestLinq(ITestOutputHelper output, SqlDialect dialect, SqlLinqBuilder builder, Expression? expression = null) {
             this.output = output;
+            this.dialect = dialect;
             this.builder = builder;
             ElementType = typeof(T);
             provider = new TestQueryProvider(this);
@@ -38,12 +39,13 @@ namespace RZ.Linq.RelationalDatabase.Tests
             {
                 "Join" => builder.BuildJoin(expression),
                 "Select" => builder.Select((UnaryExpression) expression.Arguments[1]),
+                "Where" => builder.BuildWhere((UnaryExpression) expression.Arguments[1], dialect),
                 _ => throw new NotSupportedException($"Not support {expression.Method.Name}")
             };
-            return new TestLinq<TEntity>(output, newBuilder, expression);
+            return new TestLinq<TEntity>(output, dialect, newBuilder, expression);
         }
 
-        public string GetQueryString() => new SqlLiteDialect().Build(builder);
+        public string GetQueryString() => dialect.Build(builder);
 
         public IEnumerator<T> GetEnumerator() => Enumerable.Empty<T>().GetEnumerator();
 

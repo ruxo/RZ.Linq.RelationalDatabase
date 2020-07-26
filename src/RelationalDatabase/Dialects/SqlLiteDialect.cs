@@ -1,16 +1,17 @@
 using System;
+using System.Linq;
 using System.Text;
 using RZ.Foundation.Extensions;
 
 namespace RZ.Linq.RelationalDatabase.Dialects
 {
-    public sealed class SqlLiteDialect
+    public sealed class SqlLiteDialect : SqlDialect
     {
-        public string Build(SqlLinqBuilder builder) {
-            var selectedFiels = builder.SelectedFields.Join(',');
+        public override string Build(SqlLinqBuilder builder) {
+            var selectedFiels = (builder.SelectedFields.Any()? builder.SelectedFields : builder.GetAllFields()).Join(',');
             var sb = new StringBuilder();
             sb.Append("SELECT ");
-            sb.Append(string.IsNullOrEmpty(selectedFiels) ? "*" : selectedFiels);
+            sb.Append(selectedFiels);
             sb.Append(" FROM ");
             switch (builder.TableSpace) {
                 case SingleTable tab:

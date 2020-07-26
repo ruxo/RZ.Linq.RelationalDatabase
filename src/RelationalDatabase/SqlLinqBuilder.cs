@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using LanguageExt;
+using RZ.Linq.RelationalDatabase.Dialects;
 using static LanguageExt.Prelude;
 
 namespace RZ.Linq.RelationalDatabase
@@ -83,6 +85,14 @@ namespace RZ.Linq.RelationalDatabase
 
         #region Select methods
 
+        public IEnumerable<string> GetAllFields() =>
+            TableSpace switch
+            {
+                SingleTable t => ListFields(t.Single),
+                JoinedTable t => t.Tables.SelectMany(ListFields),
+                _ => throw new NotSupportedException()
+            };
+
         public SqlLinqBuilder Select(UnaryExpression expression) {
             var lambda = (LambdaExpression) expression.Operand;
             return With(SelectedFields: lambda.Body switch
@@ -104,13 +114,13 @@ namespace RZ.Linq.RelationalDatabase
                 _ => throw new InvalidOperationException($"Type {tableType.Name} is not in query context!")
             };
 
-        ImmutableList<string> GetSelect(ParameterExpression expr) => ListFields(GetTable(expr.Type));
+        ImmutableList<string> GetSelect(ParameterExpression expr) => ListFields(GetTable(expr.Type)).ToImmutableList();
         ImmutableList<string> GetSelect(MemberExpression expr) => ImmutableList.Create(GetColumnName(expr.Member));
 
         ImmutableList<string> GetSelect(NewExpression expr) =>
             expr.Arguments.SelectMany(arg => arg switch
                 {
-                    MemberExpression m => ImmutableList.Create(GetColumnName(m.Member)),
+                    MemberExpression m => GetSelect(m),
                     ParameterExpression p => GetSelect(p),
                     _ => throw new NotSupportedException($"Expression type {arg.GetType()} is not supported.")
                 })
@@ -121,8 +131,11 @@ namespace RZ.Linq.RelationalDatabase
             return tableAlias.FieldName(tableAlias.Table.Columns.Single(c => c.ColumnName == memberInfo.Name).Name);
         }
 
-        static ImmutableList<string> ListFields(TableAlias tableAlias) => tableAlias.Table.Columns.Select(c => tableAlias.FieldName(c.Name)).ToImmutableList();
+        static IEnumerable<string> ListFields(TableAlias tableAlias) => tableAlias.Table.Columns.Select(c => tableAlias.FieldName(c.Name));
 
         #endregion
+
+        public SqlLinqBuilder BuildWhere(UnaryExpression expression, SqlDialect dialect) =>
+            With(WhereCondition: new WhereBuilder(this, dialect).Parse(expression));
     }
 }
