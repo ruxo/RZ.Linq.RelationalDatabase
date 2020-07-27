@@ -17,6 +17,7 @@ namespace RZ.Linq.RelationalDatabase
     interface IQueryableEngine
     {
         IOrderedQueryable<TEntity> Apply<TEntity>(MethodCallExpression expression);
+        TResult Execute<TResult>(MethodCallExpression expression);
     }
     public abstract class SqlTextQueryableBase<T> : IOrderedQueryable<T>, IQueryableEngine, ISqlGenerator
     {
@@ -54,6 +55,10 @@ namespace RZ.Linq.RelationalDatabase
             return CreateSelf<TEntity>(Dialect, newBuilder, expression);
         }
 
+        public virtual TResult Execute<TResult>(MethodCallExpression expression) {
+            throw new NotSupportedException($"Not support method {expression.Method.Name}!");
+        }
+
         protected TExpected GetConstantValue<TExpected>(Expression expression) => (TExpected) ((ConstantExpression) expression).Value;
 
         #region Enumerators
@@ -83,8 +88,6 @@ namespace RZ.Linq.RelationalDatabase
             throw new NotImplementedException();
         }
 
-        public TResult Execute<TResult>(Expression expression) {
-            throw new NotImplementedException();
-        }
+        public TResult Execute<TResult>(Expression expression) => queryEngine.Execute<TResult>((MethodCallExpression) expression);
     }
 }

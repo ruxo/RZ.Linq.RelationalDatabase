@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using FluentAssertions;
 using RZ.Linq.RelationalDatabase.Dialects;
@@ -156,6 +157,20 @@ namespace RZ.Linq.RelationalDatabase.Tests
             var result = (ISqlGenerator) (from p in SqlLiteLinq<PersonPoco>()
                                           select p).Take(10).Skip(5);
             result.GetSelectString().Should().Be("SELECT Id,Name,IsActive,Created FROM PersonPoco LIMIT 10 OFFSET 5");
+        }
+
+        [Fact]
+        public void QueryCount() {
+            Func<int> call = () => (from p in SqlLiteLinq<PersonPoco>() select p).Count();
+
+            call.Should().Throw<NotSupportedException>("Using special Count method instead!");
+        }
+
+        [Fact]
+        public void QueryCountWithTable() {
+            var result = (ISqlGenerator) from p in SqlLiteLinq<PersonPoco>() select CommonSql.Count(p);
+
+            result.GetSelectString().Should().Be("SELECT COUNT(*) FROM PersonPoco");
         }
     }
 }
