@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using LanguageExt;
+using RZ.Foundation.Extensions;
 using RZ.Linq.RelationalDatabase.Dialects;
 using static LanguageExt.Prelude;
 
@@ -98,20 +99,25 @@ namespace RZ.Linq.RelationalDatabase
             return With(SelectedFields: lambda.Body switch
             {
                 ParameterExpression p => GetSelect(p),
-                MemberExpression m => GetSelect(m),
+                MemberExpression m => GetTableFromProperty(m.Member)
+                                        .Map(t => ListFields(t).ToImmutableList())
+                                        .IfNone(() => GetSelect(m)),
                 NewExpression n => GetSelect(n),
                 _ => throw new NotSupportedException($"Not support {lambda.Body.GetType()}")
             });
         }
 
+        Option<TableAlias> GetTableFromProperty(MemberInfo member) => member is PropertyInfo p ? TryGetTable(p.PropertyType) : None;
+
         TableAlias GetTable(Type tableType) =>
+            TryGetTable(tableType).GetOrThrow(() => new InvalidOperationException($"Type {tableType.Name} is not in query context!"));
+
+        Option<TableAlias> TryGetTable(Type tableType) =>
             TableSpace switch
             {
-                SingleTable t => t.Single.Table.RepresentationType == tableType
-                                     ? t.Single
-                                     : throw new InvalidOperationException($"Type {tableType.Name} is not in query context!"),
-                JoinedTable t => t.Tables.Single(tab => tab.Table.RepresentationType == tableType),
-                _ => throw new InvalidOperationException($"Type {tableType.Name} is not in query context!")
+                SingleTable t => t.Single.Table.RepresentationType == tableType ? Some(t.Single) : None,
+                JoinedTable t => Optional(t.Tables.SingleOrDefault(tab => tab.Table.RepresentationType == tableType)),
+                _ => None
             };
 
         ImmutableList<string> GetSelect(ParameterExpression expr) => ListFields(GetTable(expr.Type)).ToImmutableList();

@@ -1,6 +1,8 @@
+using System;
 using System.Linq.Expressions;
 using RZ.Foundation.Extensions;
 using RZ.Linq.RelationalDatabase.Dialects;
+using static LanguageExt.Prelude;
 
 namespace RZ.Linq.RelationalDatabase
 {
@@ -20,14 +22,25 @@ namespace RZ.Linq.RelationalDatabase
         }
 
         protected override Expression VisitBinary(BinaryExpression node) =>
-            Expression.Constant(dialect.BuildBinaryExpression(DotnetOperator.Parse(node.Method.Name).Get(),
+            Expression.Constant(dialect.BuildBinaryExpression(DotnetOperator.Parse(node.NodeType)
+                                                                            .OrElse(() => Optional(node.Method?.Name!).Bind(DotnetOperator.Parse))
+                                                                            .Get(),
                                                               EvaluateString(node.Left),
                                                               EvaluateString(node.Right)));
 
         protected override Expression VisitMember(MemberExpression node) =>
-            Expression.Constant(sqlBuilder.TableSpace is SingleTable? node.Member.Name : node.ToString());
+            Expression.Constant($"{GetPrefix(node.Expression)}{node.Member.Name}");
+
+        string GetPrefix(Expression expression) {
+            var prop = ExtractReturnString(Visit(expression));
+            return string.IsNullOrEmpty(prop) ? prop : $"{prop}.";
+        }
+
+        protected override Expression VisitParameter(ParameterExpression node) => Expression.Constant(string.Empty);
 
         protected override Expression VisitConstant(ConstantExpression node) => Expression.Constant(dialect.GetLiteral(node.Value));
+
+        string ExtractReturnString(Expression expression) => (string) ((ConstantExpression) expression).Value;
 
         string EvaluateString(Expression expression) => (string) ((ConstantExpression) Visit(expression)).Value;
     }

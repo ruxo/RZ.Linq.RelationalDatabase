@@ -24,6 +24,12 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         [Fact]
+        public void QueryAllInLine() {
+            var result = (ISqlGenerator) from i in SqlLiteLinq<PersonPoco>() select i;
+            result.GetSelectString().Should().Be("SELECT Id,Name,IsActive,Created FROM PersonPoco");
+        }
+
+        [Fact]
         public void QuerySingleColumn() {
             var linq = SqlLiteLinq<PersonPoco>();
             var result = (ISqlGenerator) from i in linq select i.Name;
@@ -71,6 +77,16 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         [Fact]
+        public void QueryJoinAndSelectSingleTableInLine() {
+            var result = (ISqlGenerator) from i in SqlLiteLinq<PersonPoco>()
+                                         join o in SqlLiteLinq<Order>() on i.Id equals o.OwnerId
+                                         select i;
+            result.GetSelectString()
+                  .Should()
+                  .Be("SELECT i.Id,i.Name,i.IsActive,i.Created FROM PersonPoco i INNER JOIN Order o ON i.Id=o.OwnerId");
+        }
+
+        [Fact]
         public void QueryTwoJoinAndSelectSingleTable() {
             var linq = SqlLiteLinq<PersonPoco>();
             var order = SqlLiteLinq<Order>();
@@ -86,10 +102,8 @@ namespace RZ.Linq.RelationalDatabase.Tests
 
         [Fact]
         public void QueryJoinAndSelectMultipleColumns() {
-            var linq = SqlLiteLinq<PersonPoco>();
-            var order = SqlLiteLinq<Order>();
-            var result = (ISqlGenerator) from i in linq
-                                         join o in order on i.Id equals o.OwnerId
+            var result = (ISqlGenerator) from i in SqlLiteLinq<PersonPoco>()
+                                         join o in SqlLiteLinq<Order>() on i.Id equals o.OwnerId
                                          select new {i.Id, i.Name, o.OrderId, o.PaidAmount, o.TargetDate };
             result.GetSelectString()
                   .Should()
@@ -103,6 +117,17 @@ namespace RZ.Linq.RelationalDatabase.Tests
                                          where i.Name == "Rux"
                                          select i;
             result.GetSelectString().Should().Be("SELECT Id,Name,IsActive,Created FROM PersonPoco WHERE Name='Rux'");
+        }
+
+        [Fact]
+        public void QueryJoinAndWhere() {
+            var result = (ISqlGenerator) from p in SqlLiteLinq<PersonPoco>()
+                                         join o in SqlLiteLinq<Order>() on p.Id equals o.OwnerId
+                                         where p.Id == 1
+                                         select p;
+            result.GetSelectString()
+                  .Should()
+                  .Be("SELECT p.Id,p.Name,p.IsActive,p.Created FROM PersonPoco p INNER JOIN Order o ON p.Id=o.OwnerId WHERE p.Id=1");
         }
     }
 }
