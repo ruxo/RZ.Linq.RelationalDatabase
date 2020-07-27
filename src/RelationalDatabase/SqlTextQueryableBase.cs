@@ -17,6 +17,7 @@ namespace RZ.Linq.RelationalDatabase
     interface IQueryableEngine
     {
         IOrderedQueryable<TEntity> Apply<TEntity>(MethodCallExpression expression);
+        TResult Execute<TResult>(MethodCallExpression expression);
     }
     public abstract class SqlTextQueryableBase<T> : IOrderedQueryable<T>, IQueryableEngine, ISqlGenerator
     {
@@ -44,14 +45,18 @@ namespace RZ.Linq.RelationalDatabase
         public IOrderedQueryable<TEntity> Apply<TEntity>(MethodCallExpression expression) {
             var newBuilder = expression.Method.Name switch
             {
-                "Join" => Builder.BuildJoin(expression),
-                "Select" => Builder.Select((UnaryExpression) expression.Arguments[1]),
+                "Join" => Builder.BuildJoin(expression, Dialect),
+                "Select" => Builder.Select((UnaryExpression) expression.Arguments[1], Dialect),
                 "Where" => Builder.BuildWhere((UnaryExpression) expression.Arguments[1], Dialect),
                 "Take" => Builder.WithTake(GetConstantValue<int>(expression.Arguments[1])),
                 "Skip" => Builder.WithSkip(GetConstantValue<int>(expression.Arguments[1])),
                 _ => throw new NotSupportedException($"Not support {expression.Method.Name}")
             };
             return CreateSelf<TEntity>(Dialect, newBuilder, expression);
+        }
+
+        public virtual TResult Execute<TResult>(MethodCallExpression expression) {
+            throw new NotSupportedException($"Not support method {expression.Method.Name}!");
         }
 
         protected TExpected GetConstantValue<TExpected>(Expression expression) => (TExpected) ((ConstantExpression) expression).Value;
@@ -83,8 +88,6 @@ namespace RZ.Linq.RelationalDatabase
             throw new NotImplementedException();
         }
 
-        public TResult Execute<TResult>(Expression expression) {
-            throw new NotImplementedException();
-        }
+        public TResult Execute<TResult>(Expression expression) => queryEngine.Execute<TResult>((MethodCallExpression) expression);
     }
 }
