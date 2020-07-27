@@ -2,17 +2,17 @@ using System;
 using System.Linq;
 using System.Text;
 using RZ.Foundation.Extensions;
-using static LanguageExt.Prelude;
 
 namespace RZ.Linq.RelationalDatabase.Dialects
 {
     public sealed class SqlLiteDialect : SqlDialect
     {
         public override string BuildSelectStatement(SqlLinqBuilder builder) {
-            var selectedFiels = (builder.SelectedFields.Any()? builder.SelectedFields : builder.GetAllFields()).Join(',');
+            var fields = builder.SelectedFields.ToArray();
+            var selectedFields = (fields.Any()? fields : builder.GetAllFields()).Join(',');
             var sb = new StringBuilder();
             sb.Append("SELECT ");
-            sb.Append(selectedFiels);
+            sb.Append(selectedFields);
             sb.Append(" FROM ");
             switch (builder.TableSpace) {
                 case SingleTable tab:

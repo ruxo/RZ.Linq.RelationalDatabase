@@ -45,7 +45,7 @@ namespace RZ.Linq.RelationalDatabase
     {
         public readonly TableSpace TableSpace;
         public readonly Option<string> WhereCondition;
-        public readonly ImmutableList<string> SelectedFields;
+        public readonly IEnumerable<string> SelectedFields;
         public readonly Option<int> Skip;
         public readonly Option<int> Take;
         public readonly bool Distinct;
@@ -53,9 +53,20 @@ namespace RZ.Linq.RelationalDatabase
         public static SqlLinqBuilder Create(Type mainTable) =>
             New(SingleTable.New(TableAlias.New(None, TableCache.GetTable(mainTable))), None, ImmutableList<string>.Empty, None, None, false);
 
+        public TableAlias GetTable(Type tableType) =>
+            TryGetTable(tableType).GetOrThrow(() => new InvalidOperationException($"Type {tableType.Name} is not in query context!"));
+
+        public Option<TableAlias> TryGetTable(Type tableType) =>
+            TableSpace switch
+            {
+                SingleTable t => t.Single.Table.RepresentationType == tableType ? Some(t.Single) : None,
+                JoinedTable t => Optional(t.Tables.SingleOrDefault(tab => tab.Table.RepresentationType == tableType)),
+                _ => None
+            };
+
         #region Join methods
 
-        public SqlLinqBuilder BuildJoin(MethodCallExpression expression) {
+        public SqlLinqBuilder BuildJoin(MethodCallExpression expression, SqlDialect dialect) {
             var (sourceAlias, sourceKey) = ExtractJoinKey((UnaryExpression) expression.Arguments[2]);
             var (targetAlias, targetKey) = ExtractJoinKey((UnaryExpression) expression.Arguments[3]);
             var joiningTable = TableCache.GetTable(((ConstantExpression) expression.Arguments[1]).Value.GetType().GetGenericArguments()[0]);
@@ -73,7 +84,7 @@ namespace RZ.Linq.RelationalDatabase
                 _ => throw new NotSupportedException()
             };
             var select = (UnaryExpression) expression.Arguments[4];
-            return With(newSpace).Select(select);
+            return With(newSpace).Select(@select, dialect);
         }
 
         (string Alias, MemberInfo JoinKey) ExtractJoinKey(UnaryExpression expression) {
@@ -95,47 +106,9 @@ namespace RZ.Linq.RelationalDatabase
                 _ => throw new NotSupportedException()
             };
 
-        public SqlLinqBuilder Select(UnaryExpression expression) {
+        public SqlLinqBuilder Select(UnaryExpression expression, SqlDialect dialect) {
             var lambda = (LambdaExpression) expression.Operand;
-            return With(SelectedFields: lambda.Body switch
-            {
-                ParameterExpression p => GetSelect(p),
-                MemberExpression m => GetTableFromProperty(m.Member)
-                                        .Map(t => ListFields(t).ToImmutableList())
-                                        .IfNone(() => GetSelect(m)),
-                NewExpression n => GetSelect(n),
-                _ => throw new NotSupportedException($"Not support {lambda.Body.GetType()}")
-            });
-        }
-
-        Option<TableAlias> GetTableFromProperty(MemberInfo member) => member is PropertyInfo p ? TryGetTable(p.PropertyType) : None;
-
-        TableAlias GetTable(Type tableType) =>
-            TryGetTable(tableType).GetOrThrow(() => new InvalidOperationException($"Type {tableType.Name} is not in query context!"));
-
-        Option<TableAlias> TryGetTable(Type tableType) =>
-            TableSpace switch
-            {
-                SingleTable t => t.Single.Table.RepresentationType == tableType ? Some(t.Single) : None,
-                JoinedTable t => Optional(t.Tables.SingleOrDefault(tab => tab.Table.RepresentationType == tableType)),
-                _ => None
-            };
-
-        ImmutableList<string> GetSelect(ParameterExpression expr) => ListFields(GetTable(expr.Type)).ToImmutableList();
-        ImmutableList<string> GetSelect(MemberExpression expr) => ImmutableList.Create(GetColumnName(expr.Member));
-
-        ImmutableList<string> GetSelect(NewExpression expr) =>
-            expr.Arguments.SelectMany(arg => arg switch
-                {
-                    MemberExpression m => GetSelect(m),
-                    ParameterExpression p => GetSelect(p),
-                    _ => throw new NotSupportedException($"Expression type {arg.GetType()} is not supported.")
-                })
-                .ToImmutableList();
-
-        string GetColumnName(MemberInfo memberInfo) {
-            var tableAlias = GetTable(memberInfo.DeclaringType);
-            return tableAlias.FieldName(tableAlias.Table.Columns.Single(c => c.ColumnName == memberInfo.Name).Name);
+            return With(SelectedFields: new SelectBuilder(this, dialect).Parse(lambda.Body));
         }
 
         static IEnumerable<string> ListFields(TableAlias tableAlias) => tableAlias.Table.Columns.Select(c => tableAlias.FieldName(c.Name));

@@ -172,5 +172,12 @@ namespace RZ.Linq.RelationalDatabase.Tests
 
             result.GetSelectString().Should().Be("SELECT COUNT(*) FROM PersonPoco");
         }
+
+        [Fact]
+        public void QueryCountWithTableField() {
+            var result = (ISqlGenerator) from p in SqlLiteLinq<PersonPoco>() select CommonSql.Count(p.Id);
+
+            result.GetSelectString().Should().Be("SELECT COUNT(Id) FROM PersonPoco");
+        }
     }
 }
