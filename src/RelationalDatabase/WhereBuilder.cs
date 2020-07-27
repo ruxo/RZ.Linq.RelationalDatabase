@@ -2,7 +2,6 @@ using System;
 using System.Linq.Expressions;
 using RZ.Foundation.Extensions;
 using RZ.Linq.RelationalDatabase.Dialects;
-using static LanguageExt.Prelude;
 
 namespace RZ.Linq.RelationalDatabase
 {
@@ -22,11 +21,10 @@ namespace RZ.Linq.RelationalDatabase
         }
 
         protected override Expression VisitBinary(BinaryExpression node) =>
-            Expression.Constant(dialect.BuildBinaryExpression(DotnetOperator.Parse(node.NodeType)
-                                                                            .OrElse(() => Optional(node.Method?.Name!).Bind(DotnetOperator.Parse))
-                                                                            .Get(),
-                                                              EvaluateString(node.Left),
-                                                              EvaluateString(node.Right)));
+            Expression.Constant(dialect.BuildBinaryExpression(
+                  DotnetOperator.Parse(node.NodeType).GetOrThrow(() => new NotSupportedException($"Operator {node.NodeType} ({node.Method}) is not supported!")),
+                  EvaluateString(node.Left),
+                  EvaluateString(node.Right)));
 
         protected override Expression VisitMember(MemberExpression node) =>
             Expression.Constant($"{GetPrefix(node.Expression)}{node.Member.Name}");

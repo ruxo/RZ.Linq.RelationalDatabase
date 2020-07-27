@@ -58,6 +58,9 @@ namespace RZ.Linq.RelationalDatabase.Dialects
             (DotnetOperatorName.LessThanOrEqual, "<="),
             (DotnetOperatorName.GreaterThan, ">"),
             (DotnetOperatorName.GreaterThanOrEqual, ">="),
+
+            (DotnetOperatorName.LogicalAnd, " AND "),
+            (DotnetOperatorName.LogicalOr, " OR ")
         }.ToImmutableDictionary(i => i.Item1, i => i.Item2);
 
         #endregion

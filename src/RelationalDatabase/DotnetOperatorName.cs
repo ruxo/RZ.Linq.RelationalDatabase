@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Linq.Expressions;
 using LanguageExt;
 using RZ.Foundation.Extensions;
@@ -25,6 +22,8 @@ namespace RZ.Linq.RelationalDatabase
         LeftShift,
         LessThan,
         LessThanOrEqual,
+        LogicalAnd,
+        LogicalOr,
         LogicalNot,
         GreaterThan,
         GreaterThanOrEqual,
@@ -40,19 +39,13 @@ namespace RZ.Linq.RelationalDatabase
 
     public static class DotnetOperator
     {
-        public static Option<DotnetOperatorName> Parse(string operatorName) => NameMapper.Get(operatorName);
         public static Option<DotnetOperatorName> Parse(ExpressionType expressionType) => ExpressionTypeMapper.Get(expressionType);
-
-        static readonly ImmutableDictionary<string, DotnetOperatorName> NameMapper =
-            (from DotnetOperatorName value in Enum.GetValues(typeof(DotnetOperatorName))
-             select KeyValuePair.Create($"op_{value}", value)
-            ).ToImmutableDictionary();
 
         static readonly ImmutableDictionary<ExpressionType, DotnetOperatorName> ExpressionTypeMapper = new[]
         {
             (ExpressionType.Add, DotnetOperatorName.Addition),
             (ExpressionType.And, DotnetOperatorName.BitwiseAnd),
-            (ExpressionType.Or, DotnetOperatorName.BitwiseOr),
+            (ExpressionType.AndAlso, DotnetOperatorName.LogicalAnd),
             (ExpressionType.Decrement, DotnetOperatorName.Decrement),
             (ExpressionType.Divide, DotnetOperatorName.Division),
             (ExpressionType.Equal, DotnetOperatorName.Equality),
@@ -69,6 +62,8 @@ namespace RZ.Linq.RelationalDatabase
             (ExpressionType.Modulo, DotnetOperatorName.Modulus),
             (ExpressionType.Multiply, DotnetOperatorName.Multiply),
             (ExpressionType.OnesComplement, DotnetOperatorName.OnesComplement),
+            (ExpressionType.Or, DotnetOperatorName.BitwiseOr),
+            (ExpressionType.OrElse, DotnetOperatorName.LogicalOr),
             (ExpressionType.RightShift, DotnetOperatorName.RightShift),
             (ExpressionType.Subtract, DotnetOperatorName.Subtraction),
             (ExpressionType.IsTrue, DotnetOperatorName.True),

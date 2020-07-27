@@ -123,11 +123,11 @@ namespace RZ.Linq.RelationalDatabase.Tests
         public void QueryJoinAndWhere() {
             var result = (ISqlGenerator) from p in SqlLiteLinq<PersonPoco>()
                                          join o in SqlLiteLinq<Order>() on p.Id equals o.OwnerId
-                                         where p.Id == 1
+                                         where p.Id == 1 && p.IsActive
                                          select p;
             result.GetSelectString()
                   .Should()
-                  .Be("SELECT p.Id,p.Name,p.IsActive,p.Created FROM PersonPoco p INNER JOIN Order o ON p.Id=o.OwnerId WHERE p.Id=1");
+                  .Be("SELECT p.Id,p.Name,p.IsActive,p.Created FROM PersonPoco p INNER JOIN Order o ON p.Id=o.OwnerId WHERE p.Id=1 AND p.IsActive");
         }
     }
 }
