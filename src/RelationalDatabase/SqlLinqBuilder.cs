@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using LanguageExt;
 using RZ.Foundation.Extensions;
+using RZ.Linq.RelationalDatabase.Builders;
 using RZ.Linq.RelationalDatabase.Dialects;
 using static LanguageExt.Prelude;
 

@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using RZ.Foundation.Extensions;
 using RZ.Linq.RelationalDatabase.Dialects;
 
-namespace RZ.Linq.RelationalDatabase
+namespace RZ.Linq.RelationalDatabase.Builders
 {
     sealed class WhereBuilder : ExpressionVisitor
     {
