@@ -129,5 +129,33 @@ namespace RZ.Linq.RelationalDatabase.Tests
                   .Should()
                   .Be("SELECT p.Id,p.Name,p.IsActive,p.Created FROM PersonPoco p INNER JOIN Order o ON p.Id=o.OwnerId WHERE p.Id=1 AND p.IsActive");
         }
+
+        [Fact]
+        public void QueryTake() {
+            var result = (ISqlGenerator) (from p in SqlLiteLinq<PersonPoco>()
+                                          select p).Take(5);
+            result.GetSelectString().Should().Be("SELECT Id,Name,IsActive,Created FROM PersonPoco LIMIT 5");
+        }
+
+        [Fact]
+        public void QueryTakeFront() {
+            var result = (ISqlGenerator) from p in SqlLiteLinq<PersonPoco>().Take(5)
+                                         select p;
+            result.GetSelectString().Should().Be("SELECT Id,Name,IsActive,Created FROM PersonPoco LIMIT 5");
+        }
+
+        [Fact]
+        public void QuerySkip() {
+            var result = (ISqlGenerator) (from p in SqlLiteLinq<PersonPoco>()
+                                          select p).Skip(5);
+            result.GetSelectString().Should().Be("SELECT Id,Name,IsActive,Created FROM PersonPoco OFFSET 5");
+        }
+
+        [Fact]
+        public void QueryTakeSkip() {
+            var result = (ISqlGenerator) (from p in SqlLiteLinq<PersonPoco>()
+                                          select p).Take(10).Skip(5);
+            result.GetSelectString().Should().Be("SELECT Id,Name,IsActive,Created FROM PersonPoco LIMIT 10 OFFSET 5");
+        }
     }
 }

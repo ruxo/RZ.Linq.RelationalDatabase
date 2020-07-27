@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text;
 using RZ.Foundation.Extensions;
+using static LanguageExt.Prelude;
 
 namespace RZ.Linq.RelationalDatabase.Dialects
 {
@@ -34,6 +35,9 @@ namespace RZ.Linq.RelationalDatabase.Dialects
             }
 
             builder.WhereCondition.IfSome(s => sb.Append($" WHERE {s}"));
+
+            builder.Take.IfSome(n => sb.Append($" LIMIT {n}"));
+            builder.Skip.IfSome(n => sb.Append($" OFFSET {n}"));
             return sb.ToString();
         }
 

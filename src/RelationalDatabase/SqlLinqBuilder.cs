@@ -45,7 +45,7 @@ namespace RZ.Linq.RelationalDatabase
         public readonly TableSpace TableSpace;
         public readonly Option<string> WhereCondition;
         public readonly ImmutableList<string> SelectedFields;
-        public readonly Option<int> Skipped;
+        public readonly Option<int> Skip;
         public readonly Option<int> Take;
         public readonly bool Distinct;
 
@@ -140,6 +140,9 @@ namespace RZ.Linq.RelationalDatabase
         static IEnumerable<string> ListFields(TableAlias tableAlias) => tableAlias.Table.Columns.Select(c => tableAlias.FieldName(c.Name));
 
         #endregion
+
+        public SqlLinqBuilder WithTake(int n) => With(Take: n);
+        public SqlLinqBuilder WithSkip(int n) => With(Skip: n);
 
         public SqlLinqBuilder BuildWhere(UnaryExpression expression, SqlDialect dialect) =>
             With(WhereCondition: new WhereBuilder(this, dialect).Parse(expression));
