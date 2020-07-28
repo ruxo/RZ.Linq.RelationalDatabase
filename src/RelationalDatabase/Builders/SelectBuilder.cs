@@ -51,7 +51,7 @@ namespace RZ.Linq.RelationalDatabase.Builders
             return Enumerable.Repeat(fieldName, 1);
         }
 
-        static IEnumerable<string> Unwrap(Expression expression) => (IEnumerable<string>) ((ConstantExpression) expression).Value;
+        static IEnumerable<string> Unwrap(Expression expression) => expression.Unwrap<IEnumerable<string>>();
 
         static IEnumerable<string> ListFields(TableAlias tableAlias) => tableAlias.Table.Columns.Select(c => tableAlias.FieldName(c.Name));
     }

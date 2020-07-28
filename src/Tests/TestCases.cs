@@ -18,6 +18,13 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         [Fact]
+        public void ToSelectHelper() {
+            var result = (from p in SqlLiteLinq<PersonPoco>() select p.Name).ToSelectStatement();
+
+            result.Should().Be("SELECT Name FROM PersonPoco");
+        }
+
+        [Fact]
         public void QueryAll() {
             var linq = SqlLiteLinq<PersonPoco>();
             var result = (ISqlGenerator) from i in linq select i;
@@ -144,6 +151,8 @@ namespace RZ.Linq.RelationalDatabase.Tests
                       "WHERE p.IsActive AND o.OwnerId=1 AND d.Quantity>1");
         }
 
+        #region Take & Skip
+
         [Fact]
         public void QueryTake() {
             var result = (ISqlGenerator) (from p in SqlLiteLinq<PersonPoco>()
@@ -172,6 +181,10 @@ namespace RZ.Linq.RelationalDatabase.Tests
             result.GetSelectString().Should().Be("SELECT Id,Name,IsActive,Created FROM PersonPoco LIMIT 10 OFFSET 5");
         }
 
+        #endregion
+
+        #region COUNT
+
         [Fact]
         public void QueryCount() {
             Func<int> call = () => (from p in SqlLiteLinq<PersonPoco>() select p).Count();
@@ -192,5 +205,29 @@ namespace RZ.Linq.RelationalDatabase.Tests
 
             result.GetSelectString().Should().Be("SELECT COUNT(Id) FROM PersonPoco");
         }
+
+        #endregion
+
+        #region Contains
+
+        [Fact]
+        public void QueryWithStringContains() {
+            var result = (from p in SqlLiteLinq<Product>()
+                          where new[] {"Milk", "TV"}.Contains(p.Name)
+                          select p.Id
+                         ).ToSelectStatement();
+            result.Should().Be("SELECT Id FROM Product WHERE Name IN ('Milk','TV')");
+        }
+
+        [Fact]
+        public void QueryWithIntContains() {
+            var result = (from p in SqlLiteLinq<PersonPoco>()
+                          where new[] {1,2,3}.Contains(p.Id)
+                          select p.Id
+                         ).ToSelectStatement();
+            result.Should().Be("SELECT Id FROM PersonPoco WHERE Id IN (1,2,3)");
+        }
+
+        #endregion
     }
 }
