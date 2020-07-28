@@ -27,19 +27,18 @@ namespace RZ.Linq.RelationalDatabase.Builders
                   EvaluateString(node.Right)));
 
         protected override Expression VisitMember(MemberExpression node) =>
-            Expression.Constant($"{GetPrefix(node.Expression)}{node.Member.Name}");
-
-        string GetPrefix(Expression expression) {
-            var prop = ExtractReturnString(Visit(expression));
-            return string.IsNullOrEmpty(prop) ? prop : $"{prop}.";
-        }
+            Expression.Constant(node.GetFieldType(sqlBuilder.TryGetTable) switch
+            {
+                ColumnField c => c.Alias.FieldName(c.Name),
+                _ => throw new NotSupportedException($"Not support expression: {node}")
+            });
 
         protected override Expression VisitParameter(ParameterExpression node) => Expression.Constant(string.Empty);
 
         protected override Expression VisitConstant(ConstantExpression node) => Expression.Constant(dialect.GetLiteral(node.Value));
 
-        string ExtractReturnString(Expression expression) => (string) ((ConstantExpression) expression).Value;
+        static string Unwrap(Expression expression) => (string) ((ConstantExpression) expression).Value;
 
-        string EvaluateString(Expression expression) => (string) ((ConstantExpression) Visit(expression)).Value;
+        string EvaluateString(Expression expression) => Unwrap(Visit(expression));
     }
 }

@@ -132,6 +132,19 @@ namespace RZ.Linq.RelationalDatabase.Tests
         }
 
         [Fact]
+        public void QueryTripleJoinsAndWhere() {
+            var result = (ISqlGenerator) from p in SqlLiteLinq<PersonPoco>()
+                                         join o in SqlLiteLinq<Order>() on p.Id equals o.OwnerId
+                                         join d in SqlLiteLinq<OrderLineItem>() on o.OrderId equals d.OrderId
+                                         where p.IsActive && o.OwnerId==1 && d.Quantity > 1
+                                         select d.Id;
+            result.GetSelectString()
+                  .Should()
+                  .Be("SELECT d.Id FROM PersonPoco p INNER JOIN Order o ON p.Id=o.OwnerId INNER JOIN order_detail d ON o.OrderId=d.OrderId "+
+                      "WHERE p.IsActive AND o.OwnerId=1 AND d.Quantity>1");
+        }
+
+        [Fact]
         public void QueryTake() {
             var result = (ISqlGenerator) (from p in SqlLiteLinq<PersonPoco>()
                                           select p).Take(5);

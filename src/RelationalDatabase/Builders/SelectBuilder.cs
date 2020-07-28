@@ -10,16 +10,6 @@ using static LanguageExt.Prelude;
 
 namespace RZ.Linq.RelationalDatabase.Builders
 {
-    [Union]
-    public interface SelectFieldType
-    {
-        // ReSharper disable UnusedMemberInSuper.Global
-        SelectFieldType Invalid();
-        SelectFieldType TableField(TableAlias alias);
-        SelectFieldType ColumnField(TableAlias alias, string name);
-        // ReSharper restore UnusedMemberInSuper.Global
-    }
-
     sealed class SelectBuilder : ExpressionVisitor
     {
         readonly SqlLinqBuilder builder;
@@ -33,7 +23,7 @@ namespace RZ.Linq.RelationalDatabase.Builders
         public IEnumerable<string> Parse(Expression expression) => Unwrap(Visit(expression));
 
         protected override Expression VisitMember(MemberExpression node) =>
-            Expression.Constant(GetFieldType(node) switch
+            Expression.Constant(node.GetFieldType(builder.TryGetTable) switch
             {
                 TableField t => ListFields(t.Alias),
                 ColumnField c => GetField(c.Alias, c.Name),
@@ -48,7 +38,7 @@ namespace RZ.Linq.RelationalDatabase.Builders
             if (node.Method.Name != nameof(CommonSql.Count) || node.Method.DeclaringType != typeof(CommonSql))
                 throw new NotSupportedException($"Not support method call: {node}");
 
-            return Expression.Constant(GetFieldType(node.Arguments[0]) switch
+            return Expression.Constant(node.Arguments[0].GetFieldType(builder.TryGetTable) switch
             {
                 TableField t => Enumerable.Repeat($"COUNT({t.Alias.FieldName("*")})", 1),
                 ColumnField c => Enumerable.Repeat($"COUNT({c.Alias.FieldName(c.Name)})", 1),
@@ -56,25 +46,10 @@ namespace RZ.Linq.RelationalDatabase.Builders
             });
         }
 
-        SelectFieldType GetFieldType(Expression expression) =>
-            expression switch
-            {
-                ParameterExpression p => TableField.New(builder.GetTable(p.Type)),
-                MemberExpression node => GetProperty(node.Member)
-                                         .Bind(p => builder.TryGetTable(p.PropertyType).Map(t => (SelectFieldType) TableField.New(t)))
-                                         .OrElse(() => builder.TryGetTable(node.Member.DeclaringType)
-                                                              .Map(t => (SelectFieldType) ColumnField.New(t, node.Member.Name)))
-                                         .IfNone(() => (SelectFieldType) Invalid.New()),
-                UnaryExpression u => GetFieldType(u.Operand),
-                _ => throw new NotSupportedException()
-            };
-
         static IEnumerable<string> GetField(TableAlias tableAlias, string name) {
             var fieldName = tableAlias.FieldName(tableAlias.Table.Columns.Single(c => c.ColumnName == name).Name);
             return Enumerable.Repeat(fieldName, 1);
         }
-
-        static Option<PropertyInfo> GetProperty(MemberInfo member) => member is PropertyInfo p ? Some(p) : None;
 
         static IEnumerable<string> Unwrap(Expression expression) => (IEnumerable<string>) ((ConstantExpression) expression).Value;
 
