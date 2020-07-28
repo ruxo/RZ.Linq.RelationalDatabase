@@ -121,6 +121,7 @@ namespace RZ.Linq.RelationalDatabase
 
         public SqlLinqBuilder WithTake(int n) => With(Take: n);
         public SqlLinqBuilder WithSkip(int n) => With(Skip: n);
+        public SqlLinqBuilder WithDistinct() => With(Distinct: true);
 
         public SqlLinqBuilder BuildWhere(UnaryExpression expression, SqlDialect dialect) =>
             With(WhereCondition: new WhereBuilder(this, dialect).Parse(expression));

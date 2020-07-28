@@ -53,6 +53,7 @@ namespace RZ.Linq.RelationalDatabase
                 "ThenByDescending" => Builder.BuildOrderByDescending((UnaryExpression) expression.Arguments[1]),
                 "Take" => Builder.WithTake(GetConstantValue<int>(expression.Arguments[1])),
                 "Skip" => Builder.WithSkip(GetConstantValue<int>(expression.Arguments[1])),
+                "Distinct" => Builder.WithDistinct(),
                 _ => throw new NotSupportedException($"Not support {expression.Method.Name}")
             };
             return CreateSelf<TEntity>(Dialect, newBuilder, expression);

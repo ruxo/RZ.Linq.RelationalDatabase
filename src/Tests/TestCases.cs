@@ -160,6 +160,15 @@ namespace RZ.Linq.RelationalDatabase.Tests
                       .Be("SELECT Id,Name,IsActive,Created FROM PersonPoco ORDER BY Name,Id DESC,IsActive");
         }
 
+        [Fact]
+        public void SupportDistinct() {
+            (from p in SqlLiteLinq<PersonPoco>()
+             select p).Distinct()
+                      .ToSelectStatement()
+                      .Should()
+                      .Be("SELECT DISTINCT Id,Name,IsActive,Created FROM PersonPoco");
+        }
+
         #region Take & Skip
 
         [Fact]

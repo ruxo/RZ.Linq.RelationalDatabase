@@ -12,6 +12,7 @@ namespace RZ.Linq.RelationalDatabase.Dialects
             var selectedFields = (fields.Any()? fields : builder.GetAllFields()).Join(',');
             var sb = new StringBuilder();
             sb.Append("SELECT ");
+            if (builder.Distinct) sb.Append("DISTINCT ");
             sb.Append(selectedFields);
             sb.Append(" FROM ");
             switch (builder.TableSpace) {
