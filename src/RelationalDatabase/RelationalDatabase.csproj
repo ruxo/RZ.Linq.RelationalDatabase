@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>RZ.Linq.RelationalDatabase</AssemblyName>
     <RootNamespace>RZ.Linq.RelationalDatabase</RootNamespace>
-    <PackageVersion>0.9.5</PackageVersion>
+    <PackageVersion>0.9.6</PackageVersion>
     <Title>RZ.Linq.RelationalDatabase</Title>
     <Authors>Ruxo Zheng</Authors>
     <Description>Transform LINQ to SQL text </Description>

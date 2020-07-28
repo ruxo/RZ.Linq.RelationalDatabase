@@ -118,6 +118,8 @@ namespace RZ.Linq.RelationalDatabase.Tests
                   .Be("SELECT i.Id,i.Name,o.OrderId,o.PaidAmount,o.TargetDate FROM PersonPoco i INNER JOIN Order o ON i.Id=o.OwnerId");
         }
 
+        #region Where cases
+
         [Fact]
         public void QueryWhereSingleField() {
             var linq = SqlLiteLinq<PersonPoco>();
@@ -150,6 +152,18 @@ namespace RZ.Linq.RelationalDatabase.Tests
                   .Be("SELECT d.Id FROM PersonPoco p INNER JOIN Order o ON p.Id=o.OwnerId INNER JOIN order_detail d ON o.OrderId=d.OrderId "+
                       "WHERE p.IsActive AND o.OwnerId=1 AND d.Quantity>1");
         }
+
+        [Fact]
+        public void WhereIsNull() {
+            (from p in SqlLiteLinq<PersonPoco>()
+             where p.Name == null
+             select p.Id
+                ).ToSelectStatement()
+                 .Should()
+                 .Be("SELECT Id FROM PersonPoco WHERE Name IS NULL");
+        }
+
+        #endregion
 
         [Fact]
         public void SupportOrderBy() {

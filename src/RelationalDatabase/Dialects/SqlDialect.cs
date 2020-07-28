@@ -38,8 +38,15 @@ namespace RZ.Linq.RelationalDatabase.Dialects
 
         #region Binary expression
 
-        public virtual string BuildBinaryExpression(DotnetOperatorName @operator, string leftValue, string rightValue) =>
-            $"{leftValue}{StandardSqlBinaryOperators[@operator]}{rightValue}";
+        public virtual string BuildBinaryExpression(DotnetOperatorName @operator, string leftValue, string rightValue) {
+            var opText = @operator switch
+            {
+                DotnetOperatorName.Equality when rightValue == "NULL" => " IS ",
+                DotnetOperatorName.Inequality when rightValue == "NULL" => " IS NOT ",
+                _ => StandardSqlBinaryOperators[@operator]
+            };
+            return $"{leftValue}{opText}{rightValue}";
+        }
 
         static readonly ImmutableDictionary<DotnetOperatorName, string> StandardSqlBinaryOperators = new[]
         {
