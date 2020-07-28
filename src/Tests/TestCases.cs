@@ -254,13 +254,40 @@ namespace RZ.Linq.RelationalDatabase.Tests
 
         [Fact]
         public void QueryWithIntContains() {
-            var result = (from p in SqlLiteLinq<PersonPoco>()
-                          where new[] {1,2,3}.Contains(p.Id)
-                          select p.Id
-                         ).ToSelectStatement();
-            result.Should().Be("SELECT Id FROM PersonPoco WHERE Id IN (1,2,3)");
+            (from p in SqlLiteLinq<PersonPoco>()
+             where new[] {1, 2, 3}.Contains(p.Id)
+             select p.Id).ToSelectStatement()
+                         .Should()
+                         .Be("SELECT Id FROM PersonPoco WHERE Id IN (1,2,3)");
         }
 
         #endregion
+
+        [Fact]
+        public void WhereLike() {
+            (from p in SqlLiteLinq<PersonPoco>()
+             where p.Name.Contains("Rux's Name")
+             select p.Id).ToSelectStatement()
+                         .Should()
+                         .Be("SELECT Id FROM PersonPoco WHERE Name LIKE '%Rux''s Name%'");
+        }
+
+        [Fact]
+        public void WhereStartsWith() {
+            (from p in SqlLiteLinq<PersonPoco>()
+             where p.Name.StartsWith("Rux")
+             select p.Id).ToSelectStatement()
+                         .Should()
+                         .Be("SELECT Id FROM PersonPoco WHERE Name LIKE 'Rux%'");
+        }
+
+        [Fact]
+        public void WhereEndsWith() {
+            (from p in SqlLiteLinq<PersonPoco>()
+             where p.Name.EndsWith("Rux")
+             select p.Id).ToSelectStatement()
+                         .Should()
+                         .Be("SELECT Id FROM PersonPoco WHERE Name LIKE '%Rux'");
+        }
     }
 }

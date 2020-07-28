@@ -5,22 +5,40 @@ using RZ.Foundation.Extensions;
 
 namespace RZ.Linq.RelationalDatabase.Dialects
 {
+    public enum LikeWildCard
+    {
+        Left, Right, LeftAndRight
+    }
+
     public abstract class SqlDialect
     {
         public abstract string BuildSelectStatement(SqlLinqBuilder builder);
 
         public virtual string GetLiteral(object? value) =>
-            LiteralMaker.Get(value?.GetType() ?? typeof(SqlDialect))
-                        .Map(f => f(value!))
-                        .GetOrThrow(() => new NotSupportedException($"Literal for {value} ({value!.GetType().Name}) is not supported."));
+            value switch
+            {
+                string s => StringLiteral(s),
+                char c => StringLiteral(c.ToString()),
+                _ => LiteralMaker.Get(value?.GetType() ?? typeof(SqlDialect))
+                                 .Map(f => f(value!))
+                                 .GetOrThrow(() => new NotSupportedException($"Literal for {value} ({value!.GetType().Name}) is not supported."))
+            };
+
+        public virtual string GetLikeText(LikeWildCard wildCard, string s) =>
+            wildCard switch
+            {
+                LikeWildCard.Left => $"'%{EscapeString(s)}'",
+                LikeWildCard.Right => $"'{EscapeString(s)}%'",
+                LikeWildCard.LeftAndRight => $"'%{EscapeString(s)}%'",
+                _ => throw new NotSupportedException($"Not support wildcard {wildCard}")
+            };
+
+        protected virtual string EscapeString(string s) => s.Replace("'", "''");
+        protected virtual string StringLiteral(string s) => $"'{EscapeString(s)}'";
 
         static string ToString(object v) => v.ToString();
-        static string StandardStringQuote(string s) => $"'{s.Replace("'", "''")}'";
-
         static readonly ImmutableDictionary<Type, Func<object, string>> LiteralMaker = new (Type,Func<object,string>)[]
         {
-            (typeof(string), s => StandardStringQuote((string)s)),
-            (typeof(char), c => StandardStringQuote(c.ToString())),
             (typeof(byte), ToString),
             (typeof(short), ToString),
             (typeof(int), ToString),

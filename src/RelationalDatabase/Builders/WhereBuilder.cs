@@ -37,9 +37,19 @@ namespace RZ.Linq.RelationalDatabase.Builders
         protected override Expression VisitMethodCall(MethodCallExpression node) =>
             Expression.Constant(node.Method.Name switch
             {
-                "Contains" => $"{node.Arguments[1].GetFieldName(sqlBuilder.TryGetTable)} IN ({node.Arguments[0].Evaluate<IEnumerable>().Cast<object>().Select(dialect.GetLiteral).Join(',')})",
+                nameof(Enumerable.Contains) when node.Method.DeclaringType == typeof(Enumerable) =>
+                    $"{node.Arguments[1].GetFieldName(sqlBuilder.TryGetTable)} IN ({node.Arguments[0].Evaluate<IEnumerable>().Cast<object>().Select(dialect.GetLiteral).Join(',')})",
+                nameof(string.Contains) when node.Method.DeclaringType == typeof(string) && node.Method.GetParameters().Length == 1 =>
+                    GetLikeStatement(LikeWildCard.LeftAndRight, node),
+                nameof(string.StartsWith) when node.Method.DeclaringType == typeof(string) && node.Method.GetParameters().Length == 1 =>
+                    GetLikeStatement(LikeWildCard.Right, node),
+                nameof(string.EndsWith) when node.Method.DeclaringType == typeof(string) && node.Method.GetParameters().Length == 1 =>
+                    GetLikeStatement(LikeWildCard.Left, node),
                 _ => throw new NotSupportedException($"Not support method {node}")
             });
+
+        string GetLikeStatement(LikeWildCard wildCard, MethodCallExpression node) =>
+            $"{node.Object.GetFieldName(sqlBuilder.TryGetTable)} LIKE {dialect.GetLikeText(wildCard, node.Arguments[0].Unwrap<string>())}";
 
         string EvaluateString(Expression expression) => Visit(expression).Unwrap<string>();
     }
