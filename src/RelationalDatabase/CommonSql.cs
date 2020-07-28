@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 // ReSharper disable UnusedParameter.Global
 
@@ -10,6 +11,8 @@ namespace RZ.Linq.RelationalDatabase
         /// </summary>
         /// <param name="fieldOrTable">Valid value is either a table type or a field</param>
         public static int Count(object fieldOrTable) => 0 /* Dummy value */;
+
+        public static bool NotContains<T>(this IEnumerable<T> seq, T value) => false /* dummy */;
 
         public static string ToSelectStatement<T>(this IQueryable<T> queryable) => ((ISqlGenerator) queryable).GetSelectString();
     }

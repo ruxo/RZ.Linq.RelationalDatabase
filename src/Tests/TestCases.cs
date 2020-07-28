@@ -157,10 +157,27 @@ namespace RZ.Linq.RelationalDatabase.Tests
         public void WhereIsNull() {
             (from p in SqlLiteLinq<PersonPoco>()
              where p.Name == null
-             select p.Id
-                ).ToSelectStatement()
-                 .Should()
-                 .Be("SELECT Id FROM PersonPoco WHERE Name IS NULL");
+             select p.Id).ToSelectStatement()
+                         .Should()
+                         .Be("SELECT Id FROM PersonPoco WHERE Name IS NULL");
+        }
+
+        [Fact]
+        public void WhereIsNotNull() {
+            (from p in SqlLiteLinq<PersonPoco>()
+             where p.Name != null
+             select p.Id).ToSelectStatement()
+                         .Should()
+                         .Be("SELECT Id FROM PersonPoco WHERE Name IS NOT NULL");
+        }
+
+        [Fact]
+        public void WhereNot() {
+            (from p in SqlLiteLinq<PersonPoco>()
+             where !p.IsActive
+             select p.Id).ToSelectStatement()
+                         .Should()
+                         .Be("SELECT Id FROM PersonPoco WHERE NOT (IsActive)");
         }
 
         #endregion
@@ -240,7 +257,7 @@ namespace RZ.Linq.RelationalDatabase.Tests
 
         #endregion
 
-        #region Contains
+        #region Contains (IN)
 
         [Fact]
         public void QueryWithStringContains() {
@@ -261,7 +278,18 @@ namespace RZ.Linq.RelationalDatabase.Tests
                          .Be("SELECT Id FROM PersonPoco WHERE Id IN (1,2,3)");
         }
 
+        [Fact]
+        public void QueryWithIntNotContains() {
+            (from p in SqlLiteLinq<PersonPoco>()
+             where !new[] {1, 2, 3}.Contains(p.Id)
+             select p.Id).ToSelectStatement()
+                         .Should()
+                         .Be("SELECT Id FROM PersonPoco WHERE Id NOT IN (1,2,3)");
+        }
+
         #endregion
+
+        #region LIKE
 
         [Fact]
         public void WhereLike() {
@@ -289,5 +317,7 @@ namespace RZ.Linq.RelationalDatabase.Tests
                          .Should()
                          .Be("SELECT Id FROM PersonPoco WHERE Name LIKE '%Rux'");
         }
+
+        #endregion
     }
 }
