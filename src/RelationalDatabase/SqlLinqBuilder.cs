@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -46,12 +45,17 @@ namespace RZ.Linq.RelationalDatabase
         public readonly TableSpace TableSpace;
         public readonly Option<string> WhereCondition;
         public readonly IEnumerable<string> SelectedFields;
+        public readonly IEnumerable<string> OrderBy;
         public readonly Option<int> Skip;
         public readonly Option<int> Take;
         public readonly bool Distinct;
 
         public static SqlLinqBuilder Create(Type mainTable) =>
-            New(SingleTable.New(TableAlias.New(None, TableCache.GetTable(mainTable))), None, ImmutableList<string>.Empty, None, None, false);
+            New(SingleTable.New(TableAlias.New(None, TableCache.GetTable(mainTable))),
+                None,
+                SelectedFields: Enumerable.Empty<string>(),
+                OrderBy: Enumerable.Empty<string>(),
+                None, None, false);
 
         public TableAlias GetTable(Type tableType) =>
             TryGetTable(tableType).GetOrThrow(() => new InvalidOperationException($"Type {tableType.Name} is not in query context!"));
@@ -120,5 +124,15 @@ namespace RZ.Linq.RelationalDatabase
 
         public SqlLinqBuilder BuildWhere(UnaryExpression expression, SqlDialect dialect) =>
             With(WhereCondition: new WhereBuilder(this, dialect).Parse(expression));
+
+        public SqlLinqBuilder BuildOrderBy(UnaryExpression expression) {
+            var lambda = (LambdaExpression) expression.Operand;
+            return With(OrderBy: OrderBy.Append(lambda.Body.GetFieldName(TryGetTable)));
+        }
+
+        public SqlLinqBuilder BuildOrderByDescending(UnaryExpression expression) {
+            var lambda = (LambdaExpression) expression.Operand;
+            return With(OrderBy: OrderBy.Append(lambda.Body.GetFieldName(TryGetTable) + " DESC"));
+        }
     }
 }

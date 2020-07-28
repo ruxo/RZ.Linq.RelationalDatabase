@@ -151,6 +151,15 @@ namespace RZ.Linq.RelationalDatabase.Tests
                       "WHERE p.IsActive AND o.OwnerId=1 AND d.Quantity>1");
         }
 
+        [Fact]
+        public void SupportOrderBy() {
+            (from p in SqlLiteLinq<PersonPoco>()
+             orderby p.Name, p.Id descending, p.IsActive
+             select p).ToSelectStatement()
+                      .Should()
+                      .Be("SELECT Id,Name,IsActive,Created FROM PersonPoco ORDER BY Name,Id DESC,IsActive");
+        }
+
         #region Take & Skip
 
         [Fact]
@@ -214,9 +223,10 @@ namespace RZ.Linq.RelationalDatabase.Tests
         public void QueryWithStringContains() {
             var result = (from p in SqlLiteLinq<Product>()
                           where new[] {"Milk", "TV"}.Contains(p.Name)
+                          orderby p.Name
                           select p.Id
                          ).ToSelectStatement();
-            result.Should().Be("SELECT Id FROM Product WHERE Name IN ('Milk','TV')");
+            result.Should().Be("SELECT Id FROM Product WHERE Name IN ('Milk','TV') ORDER BY Name");
         }
 
         [Fact]

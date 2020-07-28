@@ -38,12 +38,7 @@ namespace RZ.Linq.RelationalDatabase.Builders
             if (node.Method.Name != nameof(CommonSql.Count) || node.Method.DeclaringType != typeof(CommonSql))
                 throw new NotSupportedException($"Not support method call: {node}");
 
-            return Expression.Constant(node.Arguments[0].GetFieldType(builder.TryGetTable) switch
-            {
-                TableField t => Enumerable.Repeat($"COUNT({t.Alias.FieldName("*")})", 1),
-                ColumnField c => Enumerable.Repeat($"COUNT({c.Alias.FieldName(c.Name)})", 1),
-                _ => throw new NotSupportedException($"Not support expression: {node}")
-            });
+            return Expression.Constant(Enumerable.Repeat($"COUNT({node.Arguments[0].GetFieldName(builder.TryGetTable, "*")})", 1));
         }
 
         static IEnumerable<string> GetField(TableAlias tableAlias, string name) {

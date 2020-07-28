@@ -48,6 +48,9 @@ namespace RZ.Linq.RelationalDatabase
                 "Join" => Builder.BuildJoin(expression, Dialect),
                 "Select" => Builder.Select((UnaryExpression) expression.Arguments[1], Dialect),
                 "Where" => Builder.BuildWhere((UnaryExpression) expression.Arguments[1], Dialect),
+                "OrderBy" => Builder.BuildOrderBy((UnaryExpression) expression.Arguments[1]),
+                "ThenBy" => Builder.BuildOrderBy((UnaryExpression) expression.Arguments[1]),
+                "ThenByDescending" => Builder.BuildOrderByDescending((UnaryExpression) expression.Arguments[1]),
                 "Take" => Builder.WithTake(GetConstantValue<int>(expression.Arguments[1])),
                 "Skip" => Builder.WithSkip(GetConstantValue<int>(expression.Arguments[1])),
                 _ => throw new NotSupportedException($"Not support {expression.Method.Name}")

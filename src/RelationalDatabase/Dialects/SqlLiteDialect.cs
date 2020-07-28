@@ -36,6 +36,12 @@ namespace RZ.Linq.RelationalDatabase.Dialects
 
             builder.WhereCondition.IfSome(s => sb.Append($" WHERE {s}"));
 
+            var orderBy = builder.OrderBy.ToArray();
+            if (orderBy.Length > 0) {
+                sb.Append(" ORDER BY ");
+                sb.AppendJoin(',', orderBy);
+            }
+
             builder.Take.IfSome(n => sb.Append($" LIMIT {n}"));
             builder.Skip.IfSome(n => sb.Append($" OFFSET {n}"));
             return sb.ToString();
